@@ -1,0 +1,10 @@
+{
+  "domain": "haval",
+  "name": "Haval / GWM Vehicle",
+  "version": "1.0.0",
+  "documentation": "https://github.com/havaleiros",
+  "requirements": ["aiohttp"],
+  "dependencies": [],
+  "codeowners": ["@haval"],
+  "config_flow": true
+}
