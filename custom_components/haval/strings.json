@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Haval / GWM Vehicle",
+        "description": "Informe as credenciais do app GWM. A senha de comandos (opcional) é a senha remota do veículo.",
+        "data": {
+          "username": "Usuário (e-mail)",
+          "password": "Senha do app",
+          "command_password": "Senha de comandos do veículo (opcional)"
+        }
+      }
+    },
+    "error": {
+      "auth_failed": "Falha de autenticação. Verifique usuário/senha.",
+      "cannot_connect": "Não foi possível conectar. Tente novamente."
+    }
+  }
+}
