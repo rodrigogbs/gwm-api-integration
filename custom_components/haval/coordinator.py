@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from typing import Any, Dict
+import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -11,6 +12,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .api import HavalApi
 from .const import CONF_USERNAME, CONF_PASSWORD, CONF_CHASSIS, DEFAULT_POLL_SECONDS
 from .exceptions import HavalAuthError, HavalApiError
+
+_LOGGER = logging.getLogger(__name__)
 
 class HavalCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
@@ -28,7 +31,7 @@ class HavalCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
 
         super().__init__(
             hass,
-            logger=None,
+            logger=_LOGGER,
             name="Haval / GWM",
             update_interval=timedelta(seconds=DEFAULT_POLL_SECONDS),
         )
