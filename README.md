@@ -14,15 +14,10 @@ Integração **nativa** (sem MQTT) para consultar status e enviar comandos remot
 Configurações → Dispositivos e serviços → **Adicionar integração** → `Haval / GWM Vehicle`
 
 Você informará:
-- **Usuário** do app (e-mail)
-- **Senha** do app (texto normal; a integração aplica MD5 como no projeto original)
-- **Senha de comandos do veículo** (opcional; se vazia, comandos ficam indisponíveis)
-
-## Entidades
-- Sensores (bateria/autonomia/odômetro/estado bruto)
-- Device tracker (se latitude/longitude estiverem presentes no status)
-- Controle de ar-condicionado (se a senha de comandos for configurada)
+- Usuário do app (e-mail)
+- Senha do app (texto normal; a integração aplica MD5 como no Postman/original)
+- Chassis/VIN (usado como deviceid no login, como no Postman)
+- Senha de comandos do veículo (opcional)
 
 ## Debug
-Se der `auth failed`, veja **Configurações → Sistema → Logs** e procure por `custom_components.haval`.
-
+Se der `cannot_connect`, teste conectividade do host `br-app-gateway.gwmcloud.com` e veja Logs do HA.
