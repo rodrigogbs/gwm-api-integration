@@ -1,7 +1,7 @@
 {
   "domain": "haval",
   "name": "Haval / GWM Vehicle",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "documentation": "https://github.com/rodrigogbs/gwm-api-integration",
   "issue_tracker": "https://github.com/rodrigogbs/gwm-api-integration/issues",
   "requirements": ["aiohttp", "async-timeout", "curl-cffi>=0.6.2"],

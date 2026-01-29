@@ -18,7 +18,7 @@ try:
     from curl_cffi import requests as crequests  # type: ignore
 except Exception as e:  # pragma: no cover
     crequests = None  # type: ignore
-    _LOGGER.warning("curl-cffi unavailable: %s", e)
+    _LOGGER.error("curl-cffi unavailable (cannot bypass APP gateway WAF): %s", e)
 
 
 COMMON_HTTP_HEADERS = {
@@ -71,8 +71,6 @@ class HavalApi:
 
     async def login(self) -> None:
         payload = {"deviceid": self._device_id, "password": self._password_md5, "account": self._username}
-        _LOGGER.debug("Login payload keys=%s deviceid=%s", list(payload.keys()), self._device_id)
-
         try:
             async with async_timeout.timeout(30):
                 async with self._session.post(
@@ -81,7 +79,7 @@ class HavalApi:
                     json=payload,
                 ) as resp:
                     text = await resp.text()
-                    _LOGGER.debug("Login HTTP %s content-type=%s body_prefix=%s", resp.status, resp.headers.get("content-type"), text[:200])
+                    _LOGGER.debug("Login HTTP %s ct=%s body_prefix=%s", resp.status, resp.headers.get("content-type"), text[:200])
                     try:
                         j = await resp.json(content_type=None)
                     except Exception as e:
@@ -95,7 +93,7 @@ class HavalApi:
             data = j.get("data") or {}
             self.access_token = data["accessToken"]
             self.refresh_token = data["refreshToken"]
-            _LOGGER.debug("Login OK: got tokens (len access=%s refresh=%s)", len(self.access_token or ""), len(self.refresh_token or ""))
+            _LOGGER.debug("Login OK: tokens acquired")
         except Exception as e:
             raise HavalAuthError(f"Unexpected login response: {j}") from e
 
@@ -109,9 +107,12 @@ class HavalApi:
 
     async def _curl_json(self, method: str, url: str, *, headers: Dict[str, str], params: Dict[str, Any] | None = None, json_body: Any | None = None) -> Any:
         if crequests is None:
-            raise HavalApiError("curl-cffi not available")
+            raise HavalApiError("curl-cffi not installed/available; APP gateway likely to drop Python TLS clients")
 
-        def _do():
+        impersonations = ["chrome", "safari_ios", "chrome_android", "edge"]
+        last_err: Exception | None = None
+
+        def _do(imp: str):
             resp = crequests.request(
                 method=method,
                 url=url,
@@ -119,59 +120,42 @@ class HavalApi:
                 params=params,
                 json=json_body,
                 timeout=30,
-                impersonate="chrome",
+                impersonate=imp,
             )
-            return resp.status_code, resp.text, dict(resp.headers)
+            return resp.status_code, resp.text
 
-        status, text, hdrs = await self._hass.async_add_executor_job(_do)
-        _LOGGER.debug("curl-cffi %s %s -> %s body_prefix=%s", method, url, status, (text or "")[:200])
-        try:
-            import json as _json
-            return _json.loads(text) if text else {}
-        except Exception as e:
-            raise HavalApiError(f"Non-JSON response (status={status}): {(text or '')[:200]}") from e
+        for imp in impersonations:
+            try:
+                status, text = await self._hass.async_add_executor_job(_do, imp)
+                _LOGGER.debug("curl-cffi[%s] %s %s -> %s body_prefix=%s", imp, method, url, status, (text or "")[:200])
+                try:
+                    import json as _json
+                    return _json.loads(text) if text else {}
+                except Exception as e:
+                    last_err = e
+                    # Keep trying other impersonations if response isn't JSON
+                    continue
+            except Exception as e:
+                last_err = e
+                continue
+
+        raise HavalApiError(f"curl-cffi failed for {url}: {last_err}")
 
     async def acquire_vehicles(self) -> str:
         url = f"{APP_BASE}globalapp/vehicle/acquireVehicles"
-        try:
-            j = await self._curl_json("GET", url, headers=self._app_headers())
-        except Exception as e1:
-            _LOGGER.debug("curl-cffi acquireVehicles failed: %s", e1)
-            try:
-                async with async_timeout.timeout(30):
-                    async with self._session.get(url, headers=self._app_headers()) as resp:
-                        text = await resp.text()
-                        _LOGGER.debug("aiohttp acquireVehicles HTTP %s body_prefix=%s", resp.status, text[:200])
-                        j = await resp.json(content_type=None)
-            except (ClientError, TimeoutError) as e2:
-                raise HavalApiError(f"Network error during acquireVehicles: {e2}") from e2
-
+        j = await self._curl_json("GET", url, headers=self._app_headers())
         try:
             vin = (j.get("data") or [])[0]["vin"]
         except Exception:
             vin = self._chassis
-
         self.vin = vin
-        _LOGGER.debug("VIN selected: %s", vin)
         return vin
 
     async def get_last_status(self, vin: Optional[str] = None) -> Dict[str, Any]:
         vin = vin or self.vin or self._chassis
         url = f"{APP_BASE}vehicle/getLastStatus"
-        try:
-            j = await self._curl_json("GET", url, headers=self._app_headers(), params={"vin": vin})
-            return j.get("data") or {}
-        except Exception as e1:
-            _LOGGER.debug("curl-cffi getLastStatus failed: %s", e1)
-            try:
-                async with async_timeout.timeout(30):
-                    async with self._session.get(url, headers=self._app_headers(), params={"vin": vin}) as resp:
-                        text = await resp.text()
-                        _LOGGER.debug("aiohttp getLastStatus HTTP %s body_prefix=%s", resp.status, text[:200])
-                        j = await resp.json(content_type=None)
-                return j.get("data") or {}
-            except (ClientError, TimeoutError) as e2:
-                raise HavalApiError(f"Network error during getLastStatus: {e2}") from e2
+        j = await self._curl_json("GET", url, headers=self._app_headers(), params={"vin": vin})
+        return j.get("data") or {}
 
     async def send_cmd_ac(self, *, vin: Optional[str], command_password_plain: str, enable: bool, temperature_c: int = 18) -> Dict[str, Any]:
         vin = vin or self.vin or self._chassis
@@ -190,5 +174,4 @@ class HavalApi:
             "vin": vin,
         }
         url = f"{APP_BASE}vehicle/T5/sendCmd"
-        j = await self._curl_json("POST", url, headers=self._app_headers(), json_body=body)
-        return j
+        return await self._curl_json("POST", url, headers=self._app_headers(), json_body=body)
