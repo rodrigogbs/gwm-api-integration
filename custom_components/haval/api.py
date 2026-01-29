@@ -18,7 +18,9 @@ HEADERS_AUTH = {
     "country": "BR",
     "devicetype": "0",
     "enterpriseid": "CC01",
+    "gwid": "",
     "language": "pt_BR",
+    "rs": "5",
     "terminal": "GW_PC_GWM",
 }
 
@@ -40,11 +42,14 @@ def _md5_hex(value: str) -> str:
 class HavalApi:
     """HTTP client for GWM/Haval endpoints (no MQTT)."""
 
-    def __init__(self, session: ClientSession, username: str, password_plain: str, device_id: str):
+    def __init__(self, session: ClientSession, username: str, password_plain: str, chassis: str):
         self._session = session
         self._username = username
         self._password_md5 = _md5_hex(password_plain)
-        self._device_id = device_id
+
+        # Per Postman/original: deviceid == chassis/VIN
+        self._device_id = chassis
+        self._chassis = chassis
 
         self.access_token: Optional[str] = None
         self.refresh_token: Optional[str] = None
@@ -67,7 +72,6 @@ class HavalApi:
         except Exception as e:
             raise HavalAuthError(str(e)) from e
 
-        # Expected: j["data"]["accessToken"], j["data"]["refreshToken"]
         try:
             data = j.get("data") or {}
             self.access_token = data["accessToken"]
@@ -90,17 +94,17 @@ class HavalApi:
                 headers=self._app_headers(),
             ) as resp:
                 j = await resp.json(content_type=None)
+        # If API returns empty list for some reason, fallback to chassis
         try:
-            vin = j["data"][0]["vin"]
-        except Exception as e:
-            raise HavalApiError(f"Unexpected acquireVehicles response: {j}") from e
+            vin = (j.get("data") or [])[0]["vin"]
+        except Exception:
+            vin = self._chassis
+
         self.vin = vin
         return vin
 
     async def get_last_status(self, vin: Optional[str] = None) -> Dict[str, Any]:
-        vin = vin or self.vin
-        if not vin:
-            raise HavalApiError("VIN is not set")
+        vin = vin or self.vin or self._chassis
         async with async_timeout.timeout(30):
             async with self._session.get(
                 f"{APP_BASE}vehicle/getLastStatus",
@@ -111,9 +115,7 @@ class HavalApi:
         return j.get("data") or {}
 
     async def get_vehicle_basics(self, vin: Optional[str] = None) -> Dict[str, Any]:
-        vin = vin or self.vin
-        if not vin:
-            raise HavalApiError("VIN is not set")
+        vin = vin or self.vin or self._chassis
         async with async_timeout.timeout(30):
             async with self._session.get(
                 f"{APP_BASE}vehicle/vehicleBasicsInfo",
@@ -128,16 +130,13 @@ class HavalApi:
             async with self._session.post(
                 f"{APP_BASE}vehicleCharge/getChargeLogs",
                 headers=self._app_headers(),
-                json={},  # Postman body empty
+                json={},
             ) as resp:
                 j = await resp.json(content_type=None)
         return j.get("data") or {}
 
     async def send_cmd_ac(self, *, vin: Optional[str], command_password_plain: str, enable: bool, temperature_c: int = 18) -> Dict[str, Any]:
-        """Send A/C command using the same structure as Postman collection."""
-        vin = vin or self.vin
-        if not vin:
-            raise HavalApiError("VIN is not set")
+        vin = vin or self.vin or self._chassis
         if not command_password_plain:
             raise HavalApiError("Command password not configured")
 

@@ -2,7 +2,8 @@ DOMAIN = "haval"
 
 CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
-CONF_DEVICE_ID = "device_id"
+CONF_CHASSIS = "chassis"  # VIN / chassis code (used as deviceid in login, as per Postman/original)
+CONF_DEVICE_ID = "device_id"  # kept for backward compat (we will store same as chassis)
 CONF_COMMAND_PASSWORD = "command_password"
 
 # Endpoints (from Postman collection)
