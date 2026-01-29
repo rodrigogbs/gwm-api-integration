@@ -7,12 +7,10 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, CONF_COMMAND_PASSWORD
 from .util import get_first
 
-
 async def async_setup_entry(hass, entry, async_add_entities):
     coord = hass.data[DOMAIN][entry.entry_id]
     cmd_pwd = entry.data.get(CONF_COMMAND_PASSWORD, "")
     async_add_entities([HavalClimate(coord, cmd_pwd)])
-
 
 class HavalClimate(CoordinatorEntity, ClimateEntity):
     _attr_name = "Haval Ar-Condicionado"
@@ -33,13 +31,11 @@ class HavalClimate(CoordinatorEntity, ClimateEntity):
 
     @property
     def available(self):
-        # If user didn't provide command password, treat controls as unavailable (read-only)
         return super().available and bool(self._cmd_pwd)
 
     @property
     def hvac_mode(self):
-        # Best-effort: infer from any known field
-        enabled = get_first(self.coordinator.data, ["climate_on", "airConditionStatus", "airConditioner.switch", "vehicleStatus.airConditionStatus"], default=False)
+        enabled = get_first(self.coordinator.data, ["climate_on", "airConditionStatus", "vehicleStatus.airConditionStatus"], default=False)
         return HVACMode.COOL if bool(enabled) else HVACMode.OFF
 
     async def async_set_hvac_mode(self, hvac_mode):

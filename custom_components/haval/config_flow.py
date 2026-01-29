@@ -6,18 +6,11 @@ from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import HavalApi
-from .const import (
-    DOMAIN,
-    CONF_USERNAME,
-    CONF_PASSWORD,
-    CONF_CHASSIS,
-    CONF_COMMAND_PASSWORD,
-)
-from .exceptions import HavalAuthError
-
+from .const import DOMAIN, CONF_USERNAME, CONF_PASSWORD, CONF_CHASSIS, CONF_COMMAND_PASSWORD
+from .exceptions import HavalAuthError, HavalApiError
 
 class HavalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 2
+    VERSION = 5
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -25,16 +18,18 @@ class HavalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input:
             api = HavalApi(
                 session=async_get_clientsession(self.hass),
+                hass=self.hass,
                 username=user_input[CONF_USERNAME],
                 password_plain=user_input[CONF_PASSWORD],
                 chassis=user_input[CONF_CHASSIS],
             )
-
             try:
                 await api.login()
                 vin = await api.acquire_vehicles()
             except HavalAuthError:
                 errors["base"] = "auth_failed"
+            except HavalApiError:
+                errors["base"] = "cannot_connect"
             except Exception:
                 errors["base"] = "cannot_connect"
             else:
@@ -56,5 +51,4 @@ class HavalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_COMMAND_PASSWORD, default=""): str,
             }
         )
-
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)

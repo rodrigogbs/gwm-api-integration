@@ -1,10 +1,10 @@
 {
   "domain": "haval",
   "name": "Haval / GWM Vehicle",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "documentation": "https://github.com/rodrigogbs/gwm-api-integration",
   "issue_tracker": "https://github.com/rodrigogbs/gwm-api-integration/issues",
-  "requirements": ["aiohttp", "async-timeout"],
+  "requirements": ["aiohttp", "async-timeout", "curl-cffi>=0.6.2"],
   "codeowners": ["@rodrigogbs"],
   "config_flow": true,
   "iot_class": "cloud_polling"

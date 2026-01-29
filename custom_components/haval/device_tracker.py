@@ -6,11 +6,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 from .util import get_first
 
-
 async def async_setup_entry(hass, entry, async_add_entities):
     coord = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([HavalTracker(coord)])
-
 
 class HavalTracker(CoordinatorEntity, TrackerEntity):
     def __init__(self, coordinator):

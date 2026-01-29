@@ -10,8 +10,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .api import HavalApi
 from .const import CONF_USERNAME, CONF_PASSWORD, CONF_CHASSIS, DEFAULT_POLL_SECONDS
-from .exceptions import HavalAuthError
-
+from .exceptions import HavalAuthError, HavalApiError
 
 class HavalCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
@@ -20,13 +19,12 @@ class HavalCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
 
         self.api = HavalApi(
             session=async_get_clientsession(hass),
+            hass=hass,
             username=entry.data[CONF_USERNAME],
             password_plain=entry.data[CONF_PASSWORD],
             chassis=entry.data[CONF_CHASSIS],
         )
-
         self.vin: str | None = None
-        self.basics: Dict[str, Any] = {}
 
         super().__init__(
             hass,
@@ -38,13 +36,12 @@ class HavalCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
     async def async_initialize(self) -> None:
         await self.api.login()
         self.vin = await self.api.acquire_vehicles()
-        self.basics = await self.api.get_vehicle_basics(self.vin)
         await self.async_config_entry_first_refresh()
 
     async def _async_update_data(self) -> Dict[str, Any]:
         try:
             return await self.api.get_last_status(self.vin)
-        except HavalAuthError:
+        except (HavalAuthError, HavalApiError):
             await self.api.login()
             self.vin = await self.api.acquire_vehicles()
             return await self.api.get_last_status(self.vin)

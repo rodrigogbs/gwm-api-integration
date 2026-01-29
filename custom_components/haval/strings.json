@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Haval / GWM Vehicle",
-        "description": "Informe as credenciais do app GWM. O campo 'Chassis/VIN' é usado como deviceid (mesmo fluxo do Postman/projeto original). A senha de comandos (opcional) é a senha remota do veículo.",
+        "description": "Informe as credenciais do app GWM. O Chassis/VIN é usado como deviceid no login (como no Postman).",
         "data": {
           "username": "Usuário (e-mail)",
           "password": "Senha do app",
@@ -14,7 +14,7 @@
     },
     "error": {
       "auth_failed": "Falha de autenticação. Verifique usuário/senha e Chassis/VIN.",
-      "cannot_connect": "Não foi possível conectar. Tente novamente."
+      "cannot_connect": "Não foi possível conectar ao gateway. Verifique rede/conectividade."
     }
   }
 }

@@ -1,9 +1,7 @@
 from __future__ import annotations
-
 from typing import Any, Iterable
 
 def get_first(data: Any, paths: Iterable[str], default=None):
-    """Try multiple dotted paths and return the first value found."""
     for p in paths:
         cur = data
         ok = True
