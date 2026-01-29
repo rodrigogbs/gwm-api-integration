@@ -1,34 +1,27 @@
-import aiohttp
-import async_timeout
+import logging
+_LOGGER = logging.getLogger(__name__)
 
-class HavalAPI:
-    def __init__(self, email, password):
-        self.email = email
+class HavalApi:
+    def __init__(self, username, password, session):
+        self.username = username
         self.password = password
-        self.token = None
+        self.session = session
 
-    async def login(self):
-        async with aiohttp.ClientSession() as session:
-            async with async_timeout.timeout(30):
-                async with session.post(
-                    "https://api.gwm.com.br/app/auth/login",
-                    json={
-                        "username": self.email,
-                        "password": self.password
-                    }
-                ) as response:
-                    data = await response.json()
-                    self.token = data["data"]["accessToken"]
+    async def authenticate(self):
+        _LOGGER.info("Mock login realizado")
 
-    async def get_status(self):
-        headers = {
-            "Authorization": f"Bearer {self.token}"
+    async def fetch_vehicle_data(self):
+        return {
+            "battery": 80,
+            "range_km": 420,
+            "doors_locked": True,
+            "latitude": -23.55,
+            "longitude": -46.63,
+            "climate_on": False,
         }
 
-        async with aiohttp.ClientSession(headers=headers) as session:
-            async with async_timeout.timeout(30):
-                async with session.get(
-                    "https://api.gwm.com.br/app/vehicle/status"
-                ) as response:
-                    data = await response.json()
-                    return data["data"]
+    async def set_climate(self, state: bool):
+        _LOGGER.info("Set climate %s", state)
+
+    async def set_lock(self, state: bool):
+        _LOGGER.info("Set lock %s", state)

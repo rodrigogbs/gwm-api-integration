@@ -1,10 +1,10 @@
 {
   "domain": "haval",
   "name": "Haval / GWM Vehicle",
-  "version": "1.0.0",
-  "documentation": "https://github.com/havaleiros",
+  "version": "1.2.0",
+  "documentation": "https://github.com/SEU_USUARIO/hacs-haval-gwm",
   "requirements": ["aiohttp"],
-  "dependencies": [],
-  "codeowners": ["@haval"],
-  "config_flow": true
+  "codeowners": ["@SEU_USUARIO"],
+  "config_flow": true,
+  "iot_class": "cloud_polling"
 }
