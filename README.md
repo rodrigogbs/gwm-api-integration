@@ -1,57 +1,28 @@
-# ==============================
-# README.md
-# ==============================
-# 🚗 Haval / GWM Vehicle – Home Assistant
+# Haval / GWM Vehicle (HTTP-only) – Home Assistant
 
-Integração **nativa** para veículos **Haval / GWM**, baseada no projeto oficial
-`hassio-haval-h6-to-mqtt`, porém **sem MQTT e sem add-on**.
+Integração **nativa** (sem MQTT) para consultar status e enviar comandos remotos para veículos GWM/Haval via API do app.
 
----
+> **Aviso**: integração não-oficial. A API pode mudar sem aviso.
 
-## ✨ Funcionalidades
+## Instalação via HACS (Custom repository)
+1. HACS → *Integrations* → ⋮ → *Custom repositories*
+2. Cole a URL do seu repositório
+3. Category: **Integration**
+4. Instale e reinicie o Home Assistant
 
-- 🔐 Login via interface do Home Assistant
-- 🔄 Renovação automática de token
-- 📊 Sensores: bateria, autonomia, quilometragem
-- 🚦 Binary sensors: portas, carregamento
-- 🔘 Switches: trava e ar-condicionado
-- 🌡️ Climate real
-- 📍 Rastreamento GPS
+## Configuração
+Configurações → Dispositivos e serviços → **Adicionar integração** → `Haval / GWM Vehicle`
 
----
+Você informará:
+- **Usuário** do app (e-mail)
+- **Senha** do app (texto normal; a integração aplica MD5 como no projeto original)
+- **Senha de comandos do veículo** (opcional; se vazia, comandos ficam indisponíveis)
 
-## 📦 Instalação via HACS
+## Entidades
+- Sensores (bateria/autonomia/odômetro/estado bruto)
+- Device tracker (se latitude/longitude estiverem presentes no status)
+- Controle de ar-condicionado (se a senha de comandos for configurada)
 
-1. Abra **HACS → Integrações → Repositórios personalizados**
-2. Adicione a URL deste repositório
-3. Categoria: **Integração**
-4. Instale **Haval / GWM Vehicle**
-5. Reinicie o Home Assistant
-6. Vá em **Configurações → Dispositivos e Serviços → Adicionar Integração**
+## Debug
+Se der `auth failed`, veja **Configurações → Sistema → Logs** e procure por `custom_components.haval`.
 
----
-
-## 🔑 Configuração
-
-- Informe o **usuário e senha** do aplicativo oficial da GWM
-- As entidades serão criadas automaticamente
-
----
-
-## ⚠️ Aviso
-
-Esta integração **não é oficial da GWM**.
-Uso por sua conta e risco.
-
----
-
-## 🧠 Créditos
-
-Baseado no projeto:
-https://github.com/havaleiros/hassio-haval-h6-to-mqtt
-
----
-
-## 📝 Licença
-
-MIT License

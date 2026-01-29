@@ -1,7 +1,7 @@
 {
-  "name": "Haval / GWM Vehicle",
+  "name": "Haval / GWM Vehicle (HTTP only)",
   "content_in_root": false,
   "domains": ["haval"],
   "country": ["BR"],
-  "homeassistant": "2023.8.0"
+  "iot_class": "cloud_polling"
 }
